@@ -61,10 +61,10 @@ static int cmd_info(char *argc) {
 static int cmd_x(char *argc){
   Log("%s", argc);
   if (argc == NULL) return 0;
-  // int n;
-  // paddr_t addr;
-  // sscanf(argc, "%d", &n, &addr);
-  // Log("%d %x\n", n, addr);
+  int n;
+  paddr_t addr;
+  sscanf(argc, "%d %ls", &n, &addr);
+  Log("%d %x\n", n, addr);
   // for (int i = 0; i < n; i++) {
   //   int tmp = vaddr_read(addr + i, 1);
   //   printf("%x ", tmp);
