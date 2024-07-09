@@ -5,41 +5,52 @@
  */
 #include <sys/types.h>
 #include <regex.h>
+#include <stdlib.h>
+
+uint32_t isa_reg_str2val(const char *s, bool *success);
 
 enum {
-  TK_NOTYPE = 256, TK_EQ, TK_PLUS, TK_MINUS, TK_MULTIPLE, TK_DIVIDE, TK_LEFT_PARENTHESIS, TK_RIGHT_PARENTHESIS
-  , TK_DECIMAL, TK_HEX, TK_REG, TK_DEREF, TK_NEQ, TK_AND
+  TK_NOTYPE = 256, 
 
   /* TODO: Add more token types */
-
+  TK_DEC,
+  TK_HEX,
+  TK_FLT,
+  TK_REG,
+  TK_NEG,
+  TK_ADR,
+  TK_EQU,
+  TK_NEQ,
+  TK_AND,
+  TK_LOR
 };
 
 static struct rule {
   char *regex;
   int token_type;
-  int priority;
 } rules[] = {
 
     /* TODO: Add more rules.
      * Pay attention to the precedence level of different rules.
      */
 
-    {" +", TK_NOTYPE, 0},              // spaces
-    {"\\+", TK_PLUS, 3},               // plus
-    {"-", TK_MINUS, 3},                // minus
-    {"\\*", TK_MULTIPLE, 4},           // multiple
-    {"/", TK_DIVIDE, 4},               // divide
-    {"\\(", TK_LEFT_PARENTHESIS, 6},   // left parenthesis
-    {"\\)", TK_RIGHT_PARENTHESIS, 6},  // right parenthesis
-    // TODO: deciaml can be more accurate
-    {"0[xX][0-9a-fA-F]+", TK_HEX,
-     0},  // hex, ps: hex need to be declared before decimal
-    {"[0-9]+", TK_DECIMAL, 0},       // decimal
-    {"\\$[0-9a-zA-Z]+", TK_REG, 0},  // register
-    {"==", TK_EQ, 2},                // equal
-    {"!=", TK_NEQ, 2},               // not equal
-    {"&&", TK_AND, 1},               // and
-};
+    {" +", TK_NOTYPE},                  // spaces
+    {"\\+", '+'},                       // plus
+    {"==", TK_EQU},                     // equal
+    {"\\*", '*'},                       // star
+    {"/", '/'},                         // div
+    {"-", '-'},                         // minus
+    {"\\(", '('},                       // left
+    {"\\)", ')'},                       // right
+    {"!=", TK_NEQ},                     // neq
+    {"&&", TK_AND},                     // amd
+    {"\\|\\|", TK_LOR},                 // or
+    {"0x[0-9a-fA-F]+", TK_HEX},         // number
+    {"([0-9])|([1-9][0-9]*)", TK_DEC},  // number
+    {"($0)|(ra)|(sp)|(gp)|(tp)|(t0)|(t1)|(t2)|(t3)|(s0)|(s1)|(a0)|(a1)|(a2)|("
+     "a3)|(a4)|(a5)|(a6)|(a7)|(s2)|(s3)|(s4)|(s5)|(s6)|(s7)|(s8)|(s9)|(s10)|("
+     "s11)|(t3)|(t4)|(t5)|(t6)",
+     TK_REG}};
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 
@@ -93,10 +104,18 @@ static bool make_token(char *e) {
          * of tokens, some extra actions should be performed.
          */
 
-        switch (rules[i].token_type) {
-          default: TODO();
+         switch (rules[i].token_type) {
+          case TK_NOTYPE:
+            break;
+          default: {
+            Token tk;
+            tk.type = rules[i].token_type;
+            tk.str[0] = '\0';
+            strncpy(tk.str, substr_start, substr_len);
+            tk.str[substr_len] = 0;
+            tokens[nr_token++] = tk;
+          }
         }
-
         break;
       }
     }
@@ -110,6 +129,97 @@ static bool make_token(char *e) {
   return true;
 }
 
+
+int priority(Token tk){
+  switch (tk.type){
+  case '(':
+  case ')':
+    return 1;
+  case '!':
+  case TK_NEG:
+  case TK_ADR:
+    return 2;
+  case '*':
+  case '/':
+    return 3;
+  case '+':
+  case '-':
+    return 4;
+  case TK_EQU:
+  case TK_NEQ:
+    return 7;
+  case TK_AND:
+    return 11;
+  case TK_LOR:
+    return 12;
+  }
+  return -1;
+}
+
+bool check_parentheses(int p, int q){
+  // num>0 表示左括号数量大于右括号  num<0 此时右括号数量大于左括号 
+  int num = 1;
+  int i;
+  if(tokens[0].type=='('){
+    for (i = p + 1; i <= q; ++i) {
+      if(tokens[i].type=='('){
+        num++;
+      }else if(tokens[i].type==')'){
+        num--;
+        if (num == 0) {
+          return (i == q);
+        }
+      }
+    }
+  }
+  return false;
+}
+
+
+int parse(Token tk){
+  char* ptr;
+  switch(tk.type){
+    case TK_DEC:return strtol(tk.str,&ptr,10);
+    case TK_HEX:return strtol(tk.str,&ptr,16);
+    case TK_REG:{
+      bool success;
+      int ans = isa_reg_str2val(tk.str, &success);
+      if (success) {
+        return ans;
+      } else {
+        printf("reg visit fail\n");
+        return 0;
+      }
+    }
+
+    default:{printf("cannot parse number\n");assert(0);}
+  }
+  
+  return  0;
+}
+uint32_t eval(int p, int q) {
+  if (p > q) {
+    /* Bad expression */
+    printf("Bad Expression\n");
+    assert(0);
+  }
+  else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+    return parse(tokens[p]);
+  } else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    return eval(p + 1, q - 1);
+  } else {
+    /* We should do more things here. */
+  }
+  return 0;
+}
+
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
@@ -119,29 +229,5 @@ uint32_t expr(char *e, bool *success) {
   /* TODO: Insert codes to evaluate the expression. */
   TODO();
 
-  return 0;
-}
-
-bool check_parentheses(int p, int q) { return true; }
-
-uint32_t eval(int p, int q) {
-  if (p > q) {
-    /* Bad expression */
-  }
-  else if (p == q) {
-    /* Single token.
-     * For now this token should be a number.
-     * Return the value of the number.
-     */
-  }
-  else if (check_parentheses(p, q) == true) {
-    /* The expression is surrounded by a matched pair of parentheses.
-     * If that is the case, just throw away the parentheses.
-     */
-    return eval(p + 1, q - 1);
-  }
-  else {
-    /* We should do more things here. */
-  }
   return 0;
 }
