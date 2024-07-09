@@ -59,17 +59,20 @@ static int cmd_info(char *argc) {
 }
 
 static int cmd_x(char *argc){
-  Log("%s", argc);
-  if (argc == NULL) return 0;
-  int n;
-  vaddr_t addr;
-  sscanf(argc, "%d %u", &n, &addr);
-  Log("%d %u\n", n, addr);
+  char *arg = strtok(NULL, " ");
+  int n = atoi(arg);
+  arg = strtok(NULL, " ");
+  if (arg == NULL) return 0;
+
+  paddr_t addr = strtol(arg, NULL, 16);
   for (int i = 0; i < n; i++) {
-    int tmp = vaddr_read(addr + i, 1);
-    printf("%x ", tmp);
+    printf("0x%08x: ", addr);
+    for (int j = 0; j < 4; j++) {
+      printf("%02x ", paddr_read(addr, 1));
+      addr++;
+    }
+    printf("\n");
   }
-  printf("\n");
   return 0;
 }
 
