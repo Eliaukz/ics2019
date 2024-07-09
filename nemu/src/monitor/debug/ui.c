@@ -59,16 +59,16 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_x(char *args){
-  char *arg = strtok(NULL, " ");
+  char *arg = strtok(args, " ");
   int n = atoi(arg);
   arg = strtok(NULL, " ");
   if (arg == NULL) return 0;
 
-  paddr_t addr = strtol(arg, NULL, 16);
+  vaddr_t addr = strtol(arg, NULL, 16);
   for (int i = 0; i < n; i++) {
     printf("0x%08x: ", addr);
     for (int j = 0; j < 4; j++) {
-      printf("%02x ", paddr_read(addr, 1));
+      printf("%02x ", vaddr_read(addr, 1));
       addr++;
     }
     printf("\n");
