@@ -80,9 +80,9 @@ static int cmd_p(char *args){
   if (args == NULL) return 0;
   bool success;
   uint32_t res = expr(args, &success);
-  if(success){
+  // if(success){
     printf("%s  =  %d", args, res);
-  }
+  // }
   return 0;
 }
 
