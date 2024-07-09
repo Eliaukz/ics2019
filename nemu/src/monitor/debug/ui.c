@@ -76,6 +76,16 @@ static int cmd_x(char *args){
   return 0;
 }
 
+static int cmd_p(char *args){
+  if (args == NULL) return 0;
+  bool success;
+  uint32_t res = expr(args, &success);
+  if(success){
+    printf("%s  =  %d", args, res);
+  }
+  return 0;
+}
+
 static struct {
   char *name;
   char *description;
@@ -90,6 +100,7 @@ static struct {
   { "si", "si n run n steps", cmd_si },
   { "info", "info r show regs w show memory", cmd_info },
   { "x", "x n addr ", cmd_x },
+  { "p", "p, expr", cmd_p },
 
 };
 
