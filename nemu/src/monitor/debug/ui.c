@@ -53,7 +53,21 @@ static int cmd_info(char *argc) {
   if(op=='r'){
     isa_reg_display();
   } else if (op == 'w') {
+
   }
+  return 0;
+}
+
+static int cmd_x(char *argc){
+  if (argc == NULL) return 0;
+  int n;
+  paddr_t addr;
+  sscanf(argc, "%d %d", &n, &addr);
+  for (int i = 0; i < n; i++) {
+    int tmp = vaddr_read(addr + i, 1);
+    printf("%x ", tmp);
+  }
+  printf("\n");
   return 0;
 }
 
@@ -70,6 +84,7 @@ static struct {
   /* TODO: Add more commands */
   { "si", "si n run n steps", cmd_si },
   { "info", "info r show regs w show memory", cmd_info },
+  { "x", "x n addr ", cmd_x },
 
 };
 
