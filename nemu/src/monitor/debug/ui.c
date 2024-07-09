@@ -38,18 +38,18 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
-static int cmd_si(char *argc){
-  if (argc == NULL) return 0;
+static int cmd_si(char *args){
+  if (args == NULL) return 0;
 
   int n;
-  sscanf(argc, "%d", &n);
+  sscanf(args, "%d", &n);
   cpu_exec(n);
   return 0;
 }
 
-static int cmd_info(char *argc) { 
+static int cmd_info(char *args) { 
   char op;
-  sscanf(argc, "%c", &op);
+  sscanf(args, "%c", &op);
   if(op=='r'){
     isa_reg_display();
   } else if (op == 'w') {
@@ -58,7 +58,7 @@ static int cmd_info(char *argc) {
   return 0;
 }
 
-static int cmd_x(char *argc){
+static int cmd_x(char *args){
   char *arg = strtok(NULL, " ");
   int n = atoi(arg);
   arg = strtok(NULL, " ");
