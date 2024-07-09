@@ -7,7 +7,8 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ
+  TK_NOTYPE = 256, TK_EQ, TK_PLUS, TK_MINUS, TK_MULTIPLE, TK_DIVIDE, TK_LEFT_PARENTHESIS, TK_RIGHT_PARENTHESIS
+  , TK_DECIMAL, TK_HEX, TK_REG, TK_DEREF, TK_NEQ, TK_AND
 
   /* TODO: Add more token types */
 
@@ -16,15 +17,28 @@ enum {
 static struct rule {
   char *regex;
   int token_type;
+  int priority;
 } rules[] = {
 
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
+    /* TODO: Add more rules.
+     * Pay attention to the precedence level of different rules.
+     */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ}         // equal
+    {" +", TK_NOTYPE, 0},              // spaces
+    {"\\+", TK_PLUS, 3},               // plus
+    {"-", TK_MINUS, 3},                // minus
+    {"\\*", TK_MULTIPLE, 4},           // multiple
+    {"/", TK_DIVIDE, 4},               // divide
+    {"\\(", TK_LEFT_PARENTHESIS, 6},   // left parenthesis
+    {"\\)", TK_RIGHT_PARENTHESIS, 6},  // right parenthesis
+    // TODO: deciaml can be more accurate
+    {"0[xX][0-9a-fA-F]+", TK_HEX,
+     0},  // hex, ps: hex need to be declared before decimal
+    {"[0-9]+", TK_DECIMAL, 0},       // decimal
+    {"\\$[0-9a-zA-Z]+", TK_REG, 0},  // register
+    {"==", TK_EQ, 2},                // equal
+    {"!=", TK_NEQ, 2},               // not equal
+    {"&&", TK_AND, 1},               // and
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -105,5 +119,29 @@ uint32_t expr(char *e, bool *success) {
   /* TODO: Insert codes to evaluate the expression. */
   TODO();
 
+  return 0;
+}
+
+bool check_parentheses(int p, int q) { return true; }
+
+uint32_t eval(int p, int q) {
+  if (p > q) {
+    /* Bad expression */
+  }
+  else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+  }
+  else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    return eval(p + 1, q - 1);
+  }
+  else {
+    /* We should do more things here. */
+  }
   return 0;
 }
