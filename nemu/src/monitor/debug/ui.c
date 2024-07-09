@@ -78,12 +78,11 @@ static int cmd_x(char *args){
 
 static int cmd_p(char *args){
   if (args == NULL) return 0;
-  bool success;
+  bool success = true;
   uint32_t res = expr(args, &success);
-  // if(success){
-  printf("%d\n", success);
-  printf("%s  =  %d\n", args, res);
-  // }
+  if(success){
+    printf("%s  =  %d\n", args, res);
+  }
   return 0;
 }
 
