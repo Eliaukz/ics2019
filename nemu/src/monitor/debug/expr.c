@@ -15,7 +15,6 @@ enum {
   /* TODO: Add more token types */
   TK_DEC,
   TK_HEX,
-  TK_FLT,
   TK_REG,
   TK_NEG,
   TK_ADR,
@@ -133,48 +132,39 @@ static bool make_token(char *e) {
 int priority(Token tk){
   switch (tk.type){
   case '(':
-  case ')':
-    return 1;
+  case ')': return 1;
   case '!':
   case TK_NEG:
-  case TK_ADR:
-    return 2;
+  case TK_ADR: return 2;
   case '*':
-  case '/':
-    return 3;
+  case '/': return 3;
   case '+':
-  case '-':
-    return 4;
+  case '-': return 4;
   case TK_EQU:
-  case TK_NEQ:
-    return 7;
-  case TK_AND:
-    return 11;
-  case TK_LOR:
-    return 12;
+  case TK_NEQ: return 7;
+  case TK_AND: return 11;
+  case TK_LOR: return 12;
   }
   return -1;
 }
 
 bool check_parentheses(int p, int q){
-  // num>0 表示左括号数量大于右括号  num<0 此时右括号数量大于左括号 
-  int num = 1;
-  int i;
-  if(tokens[0].type=='('){
-    for (i = p + 1; i <= q; ++i) {
-      if(tokens[i].type=='('){
-        num++;
-      }else if(tokens[i].type==')'){
-        num--;
-        if (num == 0) {
-          return (i == q);
-        }
-      }
-    }
-  }
-  return false;
-}
+  // num>0 表示左括号数量大于右括号  num<0 此时右括号数量大于左括号
+  if (tokens[p].type != '(' || tokens[q].type != ')') return false;
 
+  int num = 0;
+
+  for (int i = p; i <= q; ++i) {
+    if (tokens[i].type == '(')
+      num++;
+    else if (tokens[i].type == ')')
+      num--;
+
+    assert(num >= 0);
+  }
+
+  return num == 0;
+}
 
 int parse(Token tk){
   char* ptr;
@@ -197,37 +187,104 @@ int parse(Token tk){
   
   return  0;
 }
-uint32_t eval(int p, int q) {
-  if (p > q) {
-    /* Bad expression */
+
+
+uint32_t eval(int p,  int q, bool* success){
+  if(p>q){
     printf("Bad Expression\n");
     assert(0);
-  }
-  else if (p == q) {
-    /* Single token.
-     * For now this token should be a number.
-     * Return the value of the number.
-     */
+  }else if(p==q){
     return parse(tokens[p]);
-  } else if (check_parentheses(p, q) == true) {
-    /* The expression is surrounded by a matched pair of parentheses.
-     * If that is the case, just throw away the parentheses.
-     */
-    return eval(p + 1, q - 1);
-  } else {
-    /* We should do more things here. */
+  }else if(check_parentheses(p,q)){
+    return eval(p+1,q-1,success);
+  }else{
+    int i,prior=-1,pos=-1,t,nr_left=0,nr_right=0;
+    for(i=q;i>=p;--i){
+      if(tokens[i].type==')')nr_right++;
+      else if(tokens[i].type=='(')nr_right--;
+      t = priority(tokens[i]);
+      if(t!=-1&&t>prior&&nr_right==0){
+        prior=t;
+        pos=i;
+      }
+    }
+    
+    if(prior==2){
+      prior=-1;
+      pos=-1;
+      for(i=p;i<=q;++i){
+        if(tokens[i].type=='(')nr_left++;
+        else if(tokens[i].type==')')nr_left--;
+        t = priority(tokens[i]);
+        if(t!=-1&&t>prior&&nr_left==0){
+          prior=t;
+          pos=i;
+        }
+      }
+    }
+    printf("Pos:%d,priority:%d,%d\n",pos,prior,tokens[pos].type);
+    int val1,val2;
+    bool success1=true,success2=true;
+    if(pos>p){
+      val1 = eval(p,pos-1,&success1);
+      val2 = eval(pos+1,q,&success2);
+      if(!(success1&&success2)){
+        *success=false;
+        return 0;
+      }
+      switch (tokens[pos].type)
+      {
+      case '+':return val1+val2;
+      case '-':return val1-val2;
+      case '*':return val1*val2;
+      case '/':{if(val2==0){printf("Denominator cannot be 0\n");*success=false;return 0;}return val1/val2;}
+      case TK_AND:return val1&&val2;
+      case TK_LOR:return val1||val2;
+      default:assert(0);
+      }
+    }else{
+      val2 = eval(pos+1,q,&success2);
+      if(!success2){
+        *success=false;
+        return 0;
+      }
+      switch (tokens[pos].type)
+      {
+      case TK_NEG:return -val2;
+      case '!':return !val2;
+      case TK_ADR:return vaddr_read(val2,4);
+      default:{printf("Symbol not recognized\n");assert(0);}
+      }
+    }
   }
-  return 0;
+  assert(0);
 }
+
+
 
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
-
+  
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
-
-  return 0;
+  //TODO();
+  int i;
+  for (i = 0; i < nr_token; i++) {
+    if(tokens[i].type=='-'||tokens[i].type=='*'){
+      if(i==0||
+      (tokens[i-1].type!=TK_DEC&&
+      tokens[i-1].type!=TK_HEX&&
+      tokens[i-1].type!=TK_REG&&
+      tokens[i-1].type!=')')
+      ){// neg
+        if(tokens[i].type=='-')
+          tokens[i].type = TK_NEG;
+        else
+          tokens[i].type = TK_ADR;
+      }
+    }
+  }
+  return eval(0,nr_token-1,success);
 }
