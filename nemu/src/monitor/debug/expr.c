@@ -247,16 +247,13 @@ uint32_t expr(char *e, bool *success) {
       if (i == 0 ||
               (tokens[i - 1].type != TK_DEC && tokens[i - 1].type != TK_HEX &&
                tokens[i - 1].type != TK_REG && tokens[i - 1].type != ')')) {
-        // 检查- 或 * 左边的token来判断该符号是不是单目运算符
+        // 检查 - 或 * 左边的token来判断该符号是不是单目运算符
         if(tokens[i].type=='-')
           tokens[i].type = TK_NEG;
         else
           tokens[i].type = TK_ADR;
       }
     }
-  }
-  for (int i = 0; i < nr_token;i++){
-    printf(" token[%d].str= %s type= %d\n", i, tokens[i].str, tokens[i].type);
   }
   return eval(0, nr_token - 1, success);
 }
