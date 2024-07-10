@@ -229,8 +229,60 @@ uint32_t eval(int p,  int q, bool* success){
       }
     }
 
-    printf("pos %d prior %d token.str '%s' type %d\n", pos, prior,
-           tokens[pos].str, tokens[i].type);
+    // printf("pos %d prior %d token.str '%s' type %d\n", pos, prior,
+    //        tokens[pos].str, tokens[i].type);
+
+    int val1, val2;
+    bool success1 = true, success2 = true;
+    if (pos > p) {
+      // 说明是双目运算符
+      val1 = eval(p, pos - 1, &success1);
+      val2 = eval(pos + 1, q, &success2);
+      if(success1&&success2){
+        switch (tokens[pos].type){
+        case '+':
+          return val1 + val2;
+        case '-':
+          return val1 - val2;
+          case '*':
+            return val1 * val2;
+        case '/':{
+          if(val2==0){
+            printf("Denominator cannot be 0\n");
+            *success = false;
+            return 0;
+          }
+          return val1 / val2;
+        }
+        case TK_AND:
+          return val1 && val2;
+        case TK_LOR:
+          return val1 || val2;
+        default:
+          assert(0);
+        }
+      }else{
+        *success = false;
+        return 0;
+      }
+    }else{
+      val2 = eval(pos + 1, q, &success2);
+      if(success2){
+      switch (tokens[i].type) {
+         case TK_NEG:return -val2;
+        case '!':
+          return !val2;
+        case TK_ADR:
+          return vaddr_read(val2, 4);
+        default: {
+          printf("Symbol not recognized\n");
+          assert(0);}
+      }}else{
+        *success = false;
+        return 0;
+      }
+    }
+
     return 0;
   }
   assert(0);
