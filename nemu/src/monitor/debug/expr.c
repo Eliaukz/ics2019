@@ -209,7 +209,8 @@ uint32_t eval(int p,  int q, bool* success){
         pos = i;
       }
     }
-
+printf("!!!!    pos %d prior %d token.str '%s' type %d\n", pos, prior,
+           tokens[pos].str, tokens[i].type);
     if(prior==2){
       // 说明右侧是一个单目运算符
       prior = -1;
