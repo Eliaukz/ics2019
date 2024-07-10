@@ -193,12 +193,41 @@ uint32_t eval(int p,  int q, bool* success){
   if(p>q){
     printf("Bad Expression\n");
     assert(0);
-  }else if(p==q){
+  } else if (p == q) {
     return parse(tokens[p]);
-  }else if(check_parentheses(p,q)){
+  } else if (check_parentheses(p, q)) {
     return eval(p+1,q-1,success);
-  }else{
-    
+  } else {
+    int i = 0, prior = -1, pos = -1, rpara = 0, lpara = 0;
+    for (int i = q; i >= p;i--){
+      if (tokens[i].type == ')') rpara++;
+      else if(tokens[i].type=='(')rpara--;
+      int tmp = priority(tokens[i]);
+      if(tmp > prior&&rpara==0){
+        prior = tmp;
+        pos = i;
+      }
+    }
+
+    if(prior==2){
+      // 说明右侧是一个单目运算符
+      prior = -1;
+      pos = -1;
+      for (int i = p; i <= q;i++){
+        if (tokens[i].type == '(') lpara++;
+        else if(tokens[1].type==')')
+          lpara--;
+        int tmp = priority(tokens[i]);
+        if(tmp > prior && lpara==0){
+          prior = tmp;
+          pos = i;
+        }
+      }
+    }
+
+    printf("pos %d prior %d token.str %s type %d\n", pos, prior,
+           tokens[pos].str, tokens[i].type);
+    return 0;
   }
   assert(0);
 }
@@ -213,15 +242,12 @@ uint32_t expr(char *e, bool *success) {
   
   /* TODO: Insert codes to evaluate the expression. */
   //TODO();
-  int i;
-  for (i = 0; i < nr_token; i++) {
-    if(tokens[i].type=='-'||tokens[i].type=='*'){
-      if(i==0||
-      (tokens[i-1].type!=TK_DEC&&
-      tokens[i-1].type!=TK_HEX&&
-      tokens[i-1].type!=TK_REG&&
-      tokens[i-1].type!=')')
-      ){// neg
+  for (int i = 0; i < nr_token; i++) {
+    if (tokens[i].type == '-' || tokens[i].type == '*') {
+      if (i == 0 ||
+              (tokens[i - 1].type != TK_DEC && tokens[i - 1].type != TK_HEX &&
+               tokens[i - 1].type != TK_REG && tokens[i - 1].type != ')')) {
+        // 检查- 或 * 左边的token来判断该符号是不是单目运算符
         if(tokens[i].type=='-')
           tokens[i].type = TK_NEG;
         else
@@ -229,5 +255,5 @@ uint32_t expr(char *e, bool *success) {
       }
     }
   }
-  return eval(0,nr_token-1,success);
+  return eval(0, nr_token - 1, success);
 }
