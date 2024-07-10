@@ -256,7 +256,7 @@ uint32_t expr(char *e, bool *success) {
     }
   }
   for (int i = 0; i < nr_token;i++){
-    printf(" token[%d].str= %s type= %d", i, tokens[i].str, tokens[i].type);
+    printf(" token[%d].str= %s type= %d\n", i, tokens[i].str, tokens[i].type);
   }
   return eval(0, nr_token - 1, success);
 }
