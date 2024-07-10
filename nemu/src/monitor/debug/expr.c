@@ -36,12 +36,12 @@ static struct rule {
     {" +", TK_NOTYPE},                  // spaces
     {"\\+", '+'},                       // plus
     {"==", TK_EQU},                     // equal
+    {"!=", TK_NEQ},                     // neq
     {"\\*", '*'},                       // star
     {"/", '/'},                         // div
     {"-", '-'},                         // minus
     {"\\(", '('},                       // left
     {"\\)", ')'},                       // right
-    {"!=", TK_NEQ},                     // neq
     {"&&", TK_AND},                     // amd
     {"\\|\\|", TK_LOR},                 // or
     {"0x[0-9a-fA-F]+", TK_HEX},         // number
@@ -50,6 +50,7 @@ static struct rule {
      "a3)|(a4)|(a5)|(a6)|(a7)|(s2)|(s3)|(s4)|(s5)|(s6)|(s7)|(s8)|(s9)|(s10)|("
      "s11)|(t3)|(t4)|(t5)|(t6)",
      TK_REG}};
+
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 
@@ -133,7 +134,7 @@ int priority(Token tk){
   switch (tk.type){
   case '(':
   case ')': return 1;
-  case '!':
+  // case '!':
   case TK_NEG:
   case TK_ADR: return 2;
   case '*':
