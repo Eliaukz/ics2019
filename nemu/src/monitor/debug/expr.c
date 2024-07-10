@@ -44,6 +44,7 @@ static struct rule {
     {"\\)", ')'},                       // right
     {"&&", TK_AND},                     // amd
     {"\\|\\|", TK_LOR},                 // or
+    {"!", '!'},                         // non
     {"0x[0-9a-fA-F]+", TK_HEX},         // number
     {"([0-9])|([1-9][0-9]*)", TK_DEC},  // number
     {"($0)|(ra)|(sp)|(gp)|(tp)|(t0)|(t1)|(t2)|(t3)|(s0)|(s1)|(a0)|(a1)|(a2)|("
@@ -133,6 +134,7 @@ int priority(Token tk){
   switch (tk.type){
   case '(':
   case ')': return 1;
+  case '!':
   case TK_NEG:
   case TK_ADR: return 2;
   case '*':
@@ -197,31 +199,33 @@ uint32_t eval(int p,  int q, bool* success){
   } else if (check_parentheses(p, q)) {
     return eval(p+1,q-1,success);
   } else {
-    int i = 0, prior = -1, pos = -1, rpara = 0, lpara = 0;
-    for (int i = q; i >= p;i--){
-      if (tokens[i].type == ')') rpara++;
-      else if(tokens[i].type=='(')rpara--;
+    int i = 0, prior = -1, pos = -1, num = 0;
+    for (int i = q; i >= p; i--) {
+      if (tokens[i].type == ')')
+        num++;
+      else if (tokens[i].type == '(')
+        num--;
       int tmp = priority(tokens[i]);
-      if(tmp > prior&&rpara==0){
+      if(tmp > prior&&num==0){
         prior = tmp;
         pos = i;
       }
     }
-printf("!!!!    pos %d prior %d token.str '%s' type %d\n", pos, prior,
-           tokens[pos].str, tokens[i].type);
-    if(prior==2){
+    while(prior==2){
       // 说明右侧是一个单目运算符
+      int tmp = pos;
       prior = -1;
       pos = -1;
-      for (int i = p; i <= q;i++){
-        if (tokens[i].type == '(') lpara++;
-        else if(tokens[1].type==')')
-          lpara--;
-        int tmp = priority(tokens[i]);
-        if(tmp > prior && lpara==0){
+      for (int i = pos; i >=p;i--){
+        if (tokens[i].type == ')')
+          num++;
+        else if (tokens[i].type == '(')
+          num--;
+        tmp = priority(tokens[i]);
+        if (tmp > prior && num == 0) {
           prior = tmp;
           pos = i;
-        }
+      }
       }
     }
 
