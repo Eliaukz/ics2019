@@ -198,64 +198,7 @@ uint32_t eval(int p,  int q, bool* success){
   }else if(check_parentheses(p,q)){
     return eval(p+1,q-1,success);
   }else{
-    int i,prior=-1,pos=-1,t,nr_left=0,nr_right=0;
-    for(i=q;i>=p;--i){
-      if(tokens[i].type==')')nr_right++;
-      else if(tokens[i].type=='(')nr_right--;
-      t = priority(tokens[i]);
-      if(t!=-1&&t>prior&&nr_right==0){
-        prior=t;
-        pos=i;
-      }
-    }
     
-    if(prior==2){
-      prior=-1;
-      pos=-1;
-      for(i=p;i<=q;++i){
-        if(tokens[i].type=='(')nr_left++;
-        else if(tokens[i].type==')')nr_left--;
-        t = priority(tokens[i]);
-        if(t!=-1&&t>prior&&nr_left==0){
-          prior=t;
-          pos=i;
-        }
-      }
-    }
-    printf("Pos:%d,priority:%d,%d\n",pos,prior,tokens[pos].type);
-    int val1,val2;
-    bool success1=true,success2=true;
-    if(pos>p){
-      val1 = eval(p,pos-1,&success1);
-      val2 = eval(pos+1,q,&success2);
-      if(!(success1&&success2)){
-        *success=false;
-        return 0;
-      }
-      switch (tokens[pos].type)
-      {
-      case '+':return val1+val2;
-      case '-':return val1-val2;
-      case '*':return val1*val2;
-      case '/':{if(val2==0){printf("Denominator cannot be 0\n");*success=false;return 0;}return val1/val2;}
-      case TK_AND:return val1&&val2;
-      case TK_LOR:return val1||val2;
-      default:assert(0);
-      }
-    }else{
-      val2 = eval(pos+1,q,&success2);
-      if(!success2){
-        *success=false;
-        return 0;
-      }
-      switch (tokens[pos].type)
-      {
-      case TK_NEG:return -val2;
-      case '!':return !val2;
-      case TK_ADR:return vaddr_read(val2,4);
-      default:{printf("Symbol not recognized\n");assert(0);}
-      }
-    }
   }
   assert(0);
 }
