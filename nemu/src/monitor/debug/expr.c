@@ -44,7 +44,6 @@ static struct rule {
     {"\\)", ')'},                       // right
     {"&&", TK_AND},                     // amd
     {"\\|\\|", TK_LOR},                 // or
-    {"\\!", '!'},                       // non
     {"0x[0-9a-fA-F]+", TK_HEX},         // number
     {"([0-9])|([1-9][0-9]*)", TK_DEC},  // number
     {"($0)|(ra)|(sp)|(gp)|(tp)|(t0)|(t1)|(t2)|(t3)|(s0)|(s1)|(a0)|(a1)|(a2)|("
@@ -134,7 +133,6 @@ int priority(Token tk){
   switch (tk.type){
   case '(':
   case ')': return 1;
-  case '!':
   case TK_NEG:
   case TK_ADR: return 2;
   case '*':
