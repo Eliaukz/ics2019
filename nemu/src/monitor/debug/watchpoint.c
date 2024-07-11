@@ -84,12 +84,13 @@ bool change_wp() {
 
 void print_wp(){
   WP* ptr;
-  printf("%-32s%-16s%-16s%-8s%-8s\n", "expression", "old_value", "value",
-         "change", "enable");
-  for (ptr = head; ptr != NULL; ptr = ptr->next) {
+  printf("%-10s%-32s%-16s%-16s%-8s%-8s\n", "index", "expression", "old_value",
+         "value", "change", "enable");
+  int index = 0;
+  for (ptr = head; ptr != NULL; ptr = ptr->next, index++) {
     char changed = (ptr->old_value == ptr->value) ? 'N' : 'Y';
     char enabled = (ptr->enable) ? 'Y' : 'N';
-    printf("%-32s%-16d%-16d%-8c%-8c\n", ptr->expression, ptr->old_value,
-           ptr->value, changed, enabled);
+    printf("%-10d%-32s%-16d%-16d%-8c%-8c\n", index, ptr->expression,
+           ptr->old_value, ptr->value, changed, enabled);
   }
 }
