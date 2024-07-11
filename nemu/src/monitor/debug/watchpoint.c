@@ -41,6 +41,8 @@ WP *new_wp(char* expression) {
 void free_wp(WP *wp) {
   WP* ptr;
   for (ptr = head; ptr != NULL && ptr->next != wp; ptr = ptr->next){}
+
+
   if (ptr == NULL) {
     printf("not find such watchpoint\n");
   } else {
@@ -54,7 +56,8 @@ void free_wp(WP *wp) {
 bool delete_wp(int no){
   WP *ptr;
   bool found = false;
-  for(ptr=head;ptr!=NULL;ptr=ptr->next){
+  printf("no%d\n", no);
+  for (ptr = head; ptr != NULL; ptr = ptr->next) {
     if (ptr->NO == no) {
       free_wp(ptr);
       found = true;
@@ -74,7 +77,7 @@ bool change_wp() {
   WP *ptr;
   for (ptr = head; ptr != NULL; ptr = ptr->next) {
     bool success;
-    int val = expr(ptr->expression,&success);
+    int val = expr(ptr->expression, &success);
     ptr->old_value = ptr->value;
     ptr->value = val;
     if(ptr->value!=ptr->old_value){
