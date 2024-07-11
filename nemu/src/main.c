@@ -13,7 +13,7 @@ static inline void test_expr() {
   uint32_t ans, result;
   char buf[65536];
   bool success;
-  FILE *fp = fopen("tools/gen-expr/input", "r");
+  FILE *fp = fopen("../tools/gen-expr/input", "r");
   while (fscanf(fp, "%d", &ans) != -1 && fscanf(fp, "%[^\n]", buf) != -1) {
     printf("ans: %u - exp: %s\n", ans, buf);
     result = expr(buf, &success);
