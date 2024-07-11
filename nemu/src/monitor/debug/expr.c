@@ -239,10 +239,8 @@ int check_parentheses(int p, int q){
       if (tokens[i].type == '(') layer++;
 
       if (tokens[i].type == ')') layer--;
-			
     }
   }
-
 
   layer = 0;
   for (int i = p; i <= q; i++) {
@@ -308,9 +306,9 @@ uint32_t eval(int p, int q, bool* success){
         if(val2==0){
           printf("Divide by 0 !\n");
           *success=false;
-          return 0;
+          assert(0);
         }
-        printf("val1:%u / val2:%u\n", val1, val2);
+        // printf("val1:%u / val2:%u\n", val1, val2);
         return val1 / val2;
       case TK_EQ:
         return val1 == val2;
