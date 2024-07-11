@@ -100,7 +100,7 @@ static struct {
   { "si", "si n run n steps", cmd_si },
   { "info", "info r show regs w show memory", cmd_info },
   { "x", "x n addr ", cmd_x },
-  { "p", "p, expr", cmd_p },
+  { "p", "p expr", cmd_p },
 
 };
 
