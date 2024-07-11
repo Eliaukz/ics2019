@@ -212,7 +212,7 @@ uint32_t eval(int p,  int q, bool* success){
         pos = i;
       }
     }
-
+    if (prior == -1) return parse(tokens[pos]);
     printf("p=%d q=%d ::pos %d prior %d token.str '%s' type %d\n", p, q, pos,
            prior, tokens[pos].str, tokens[pos].type);
 
@@ -268,7 +268,6 @@ uint32_t eval(int p,  int q, bool* success){
         return 0;
       }
     }
-assert(0);
     return 0;
   }
   assert(0);
