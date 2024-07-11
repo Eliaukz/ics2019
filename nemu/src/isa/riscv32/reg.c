@@ -20,6 +20,6 @@ uint32_t isa_reg_str2val(const char *s, bool *success) {
       return cpu.gpr[i]._32;
     }
   }
-  success=false;
+  *success = false;
   return 0;
 }

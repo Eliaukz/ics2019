@@ -49,8 +49,7 @@ static struct rule {
     {"0[xX][0-9a-fA-F]+", TK_HEXADECIMAL},
     {"[0-9]+", TK_DECIMAL},
     {"\\$(\\$0|ra|[sgt]p|t[0-6]|a[0-7]|s([0-9]|1[0-1]))",
-     TK_REG},  // more specific
-    // {"\\$[\\$0-9a-zA-z]+", TK_REG},  // general
+     TK_REG},  
     {"\\|\\|", TK_OR},
     {"<=", TK_LESSEQ},
     {">=", TK_GREATEREQ},
@@ -211,10 +210,10 @@ int parse(Token tk){
       return strtol(tk.str, &ptr, 16);
     case TK_REG:{
       bool success;
-      int ans = isa_reg_str2val(tk.str,&success);
-      if(success){
+      int ans = isa_reg_str2val(tk.str, &success);
+      if (success) {
         return ans;
-      }else{
+      } else {
         printf("reg visit fail\n");
         return 0;
       }
