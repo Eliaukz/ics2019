@@ -53,7 +53,7 @@ static int cmd_info(char *args) {
   if(op=='r'){
     isa_reg_display();
   } else if (op == 'w') {
-
+    print_wp();
   }
   return 0;
 }
@@ -86,21 +86,35 @@ static int cmd_p(char *args){
   return 0;
 }
 
+static int cmd_w(char *args) {
+  if (args == NULL) return 0;
+
+  new_wp(args);
+  return 0;
+}
+
+static int cmd_d(char *args){
+  if (args == NULL) return 0;
+  delete_wp(atoi(args));
+  return 0;
+}
+
 static struct {
   char *name;
   char *description;
   int (*handler) (char *);
-} cmd_table [] = {
-  { "help", "Display informations about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
-  
+} cmd_table[] = {
+    {"help", "Display informations about all supported commands", cmd_help},
+    {"c", "Continue the execution of the program", cmd_c},
+    {"q", "Exit NEMU", cmd_q},
 
-  /* TODO: Add more commands */
-  { "si", "si n run n steps", cmd_si },
-  { "info", "info r show regs w show memory", cmd_info },
-  { "x", "x n addr ", cmd_x },
-  { "p", "p expr", cmd_p },
+    /* TODO: Add more commands */
+    {"si", "si n run n steps", cmd_si},
+    {"info", "info r show regs w show memory", cmd_info},
+    {"x", "x n addr ", cmd_x},
+    {"p", "p expr", cmd_p},
+    {"w", "w EXPR : set a watchpoint at EXPR", cmd_w},
+    {"d", "d N : delete the NO.N watchpoint", cmd_d},
 
 };
 

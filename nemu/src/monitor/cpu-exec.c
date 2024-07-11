@@ -61,7 +61,10 @@ void cpu_exec(uint64_t n) {
   log_clearbuf();
 
     /* TODO: check watchpoints here. */
-
+  if(change_wp()){
+    nemu_state.state = NEMU_STOP;
+    print_wp();
+  }
 #endif
 
   g_nr_guest_instr ++;

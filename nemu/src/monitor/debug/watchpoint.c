@@ -62,6 +62,9 @@ bool delete_wp(int no){
   }
   return found;
 }
+
+
+
 bool change_wp() {
   bool has_changed = false;
   WP *ptr;
@@ -76,6 +79,8 @@ bool change_wp() {
   }
   return has_changed;
 }
+
+
 void print_wp(){
   WP* ptr;
   printf("%-32s%-16s%-16s%-8s%-8s\n", "expression", "old_value", "value",
