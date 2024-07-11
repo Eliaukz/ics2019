@@ -26,6 +26,7 @@ void init_wp_pool() {
 WP *new_wp(char* expression) {
   WP *res = free_;
   if (res == NULL) assert(0);
+  free_ = free_->next;
   res->next = head;
   head = res;
   res->expression = (char *)malloc(strlen(expression) * sizeof(char));
