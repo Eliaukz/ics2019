@@ -40,16 +40,24 @@ WP *new_wp(char* expression) {
 
 void free_wp(WP *wp) {
   WP* ptr;
-  for (ptr = head; ptr != NULL && ptr->next != wp; ptr = ptr->next){}
 
-
-  if (ptr == NULL) {
-    printf("not find such watchpoint\n");
+  if(head==wp){
+    ptr = head;
+    head = head->next;
+    ptr->next = free_;
+    free_ = ptr;
+    wp->enable = false;
   } else {
-    ptr->next = wp->next;
-    wp->next = free_;
-    free_ = wp;
-    wp->enable=false;
+    for (ptr = head; ptr != NULL && ptr->next != wp; ptr = ptr->next) {}
+
+    if (ptr == NULL) {
+      printf("not find such watchpoint\n");
+    } else {
+      ptr->next = wp->next;
+      wp->next = free_;
+      free_ = wp;
+      wp->enable = false;
+    }
   }
 }
 
