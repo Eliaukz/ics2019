@@ -211,23 +211,6 @@ uint32_t eval(int p,  int q, bool* success){
         pos = i;
       }
     }
-    while(prior==2){
-      // 说明右侧是一个单目运算符
-      int tmp = pos;
-      prior = -1;
-      pos = -1;
-      for (int i = pos; i >=p;i--){
-        if (tokens[i].type == ')')
-          num++;
-        else if (tokens[i].type == '(')
-          num--;
-        tmp = priority(tokens[i]);
-        if (tmp > prior && num == 0) {
-          prior = tmp;
-          pos = i;
-      }
-      }
-    }
 
     // printf("pos %d prior %d token.str '%s' type %d\n", pos, prior,
     //        tokens[pos].str, tokens[i].type);
