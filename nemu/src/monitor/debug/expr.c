@@ -167,7 +167,7 @@ bool check_parentheses(int p, int q){
   return num == 0;
 }
 
-int parse(Token tk){
+uint32_t parse(Token tk){
   char* ptr;
   switch(tk.type){
     case TK_DEC:return strtol(tk.str,&ptr,10);
@@ -212,7 +212,9 @@ uint32_t eval(int p,  int q, bool* success){
         pos = i;
       }
     }
-    if (prior == -1) return parse(tokens[pos]);
+    if (prior == -1) return  parse(tokens[pos]);
+
+
     printf("p=%d q=%d ::pos %d prior %d token.str '%s' type %d\n", p, q, pos,
            prior, tokens[pos].str, tokens[pos].type);
 
