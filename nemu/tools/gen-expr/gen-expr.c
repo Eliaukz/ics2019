@@ -9,22 +9,29 @@
 // this should be enough
 char buf[65536];
 int pos = 0;
+int nr_tokens = 0;
 
 uint32_t choose(uint32_t n) { return rand() % n; }
 
 void gen_num() {
-  uint32_t num = rand() % 100;
+  uint32_t num = rand() % 1000;
   char buffer[40];
   snprintf(buffer, sizeof(buffer), "%d", num);
   int len = strlen(buffer);
   strcpy(&buf[pos],buffer);
   pos += len;
+  nr_tokens++;
+  return;
 }
 
 void gen(char c){
    if (c == '(') buf[pos] = '(';
+
    if (c == ')') buf[pos] = ')';
+
    pos++;
+   nr_tokens++;
+   return;
 }
 
  void gen_rand_op(){
@@ -35,19 +42,24 @@ void gen(char c){
     case 3 : buf[pos]='/';break;
   }
   pos++;
+  nr_tokens++;
+  return;
 }
 
  void gen_rand_expr() {
   switch (choose(3)){
     case 0 :
+      if (nr_tokens + 1 >= NR_TOKENS) break;
       gen_num();
       break;
     case 1:
+      if (nr_tokens + 3 >= NR_TOKENS) break;
       gen('(');
       gen_rand_expr();
       gen(')');
       break;
     case 2:
+      if (nr_tokens + 3 >= NR_TOKENS) break;
       gen_rand_expr();
       gen_rand_op();
       gen_rand_expr();
@@ -74,6 +86,7 @@ int main(int argc, char *argv[]) {
   int i;
   for (i = 0; i < loop; i ++) {
     pos = 0;
+    nr_tokens = 0;
     memset(buf, 0, sizeof(buf));
     gen_rand_expr();
 
