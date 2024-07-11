@@ -199,6 +199,7 @@ uint32_t eval(int p,  int q, bool* success){
   } else if (check_parentheses(p, q)) {
     return eval(p + 1, q - 1, success);
   } else {
+
     int i = 0, prior = -1, pos = -1, num = 0;
     for (int i = q; i >= p; i--) {
       if (tokens[i].type == ')')
@@ -259,8 +260,10 @@ uint32_t eval(int p,  int q, bool* success){
           return vaddr_read(val2, 4);
         default: {
           printf("Symbol not recognized\n");
-          assert(0);}
-      }}else{
+          assert(0);
+        }
+      }
+      } else {
         *success = false;
         return 0;
       }
