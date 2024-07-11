@@ -10,10 +10,22 @@
 uint32_t isa_reg_str2val(const char *s, bool *success);
 
 enum {
-  TK_NOTYPE = 256, TK_EQ, TK_NOTEQ, TK_DECIMAL, TK_OR, TK_LESSEQ, TK_GREATEREQ, TK_LESS, TK_GREATER, TK_HEXADECIMAL, TK_AND, TK_REG, TK_DEREFERENCE, TK_POSNUM, TK_NEGNUM
-
+  TK_NOTYPE = 256,
+  TK_EQ,
+  TK_NOTEQ,
+  TK_DECIMAL,
+  TK_OR,
+  TK_LESSEQ,
+  TK_GREATEREQ,
+  TK_LESS,
+  TK_GREATER,
+  TK_HEXADECIMAL,
+  TK_AND,
+  TK_REG,
+  TK_DEREFERENCE,
+  TK_POSNUM,
+  TK_NEGNUM
   /* TODO: Add more token types */
-
 };
 
 static struct rule {
@@ -21,30 +33,30 @@ static struct rule {
   int token_type;
 } rules[] = {
 
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
+    /* TODO: Add more rules.
+     * Pay attention to the precedence level of different rules.
+     */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ},         // equal
-	{"!=", TK_NOTEQ},			// not equal
-	{"\\-", '-'},					// minus
-	{"\\*", '*'},					// times
-	{"/", '/'},						// divide
-	{"\\(", '('},
-	{"\\)", ')'},
-	{"0[xX][0-9a-fA-F]+",TK_HEXADECIMAL},
-	{"[0-9]+", TK_DECIMAL},
-	{"\\$(\\$0|ra|[sgt]p|t[0-6]|a[0-7]|s([0-9]|1[0-1]))", TK_REG}, // more specific
-	// {"\\$[\\$0-9a-zA-z]+", TK_REG},  // general
-	{"\\|\\|",TK_OR},
-	{"<=", TK_LESSEQ},
-	{">=", TK_GREATEREQ},
-	{"<", TK_LESS},
-	{">", TK_GREATER},
-	{"&&",TK_AND}
-};
+    {" +", TK_NOTYPE},  // spaces
+    {"\\+", '+'},       // plus
+    {"==", TK_EQ},      // equal
+    {"!=", TK_NOTEQ},   // not equal
+    {"\\-", '-'},       // minus
+    {"\\*", '*'},       // times
+    {"/", '/'},         // divide
+    {"\\(", '('},
+    {"\\)", ')'},
+    {"0[xX][0-9a-fA-F]+", TK_HEXADECIMAL},
+    {"[0-9]+", TK_DECIMAL},
+    {"\\$(\\$0|ra|[sgt]p|t[0-6]|a[0-7]|s([0-9]|1[0-1]))",
+     TK_REG},  // more specific
+    // {"\\$[\\$0-9a-zA-z]+", TK_REG},  // general
+    {"\\|\\|", TK_OR},
+    {"<=", TK_LESSEQ},
+    {">=", TK_GREATEREQ},
+    {"<", TK_LESS},
+    {">", TK_GREATER},
+    {"&&", TK_AND}};
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 
@@ -99,23 +111,23 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-					case TK_NOTYPE:
-						break;
-					case TK_DECIMAL:
-					case TK_HEXADECIMAL:
-					case TK_REG:
-						tokens[nr_token].type = rules[i].token_type;
-						if(substr_len>=32){
+          case TK_NOTYPE:
+            break;
+          case TK_DECIMAL:
+          case TK_HEXADECIMAL:
+          case TK_REG:
+            tokens[nr_token].type = rules[i].token_type;
+            if (substr_len >= 32) {
               printf("\033[0;33m Number Overflow !\n\033[0m;");
               return false;
             }
             strncpy(tokens[nr_token].str,substr_start,substr_len);
-            tokens[nr_token].str[substr_len] ='\0';
+            tokens[nr_token].str[substr_len] = '\0';
             nr_token++;
             break;
-          default: 
+          default:
             tokens[nr_token].type = rules[i].token_type;
-           	nr_token++;
+            nr_token++;
         }
 
         break;
@@ -131,13 +143,13 @@ static bool make_token(char *e) {
   return true;
 }
 
-int op_precedence(int type)
-{
-  switch(type)
-  {
-		case TK_NEGNUM:
-		case TK_POSNUM: return 1;
-		case TK_DEREFERENCE: return 2;
+int op_precedence(int type){
+  switch (type) {
+    case TK_NEGNUM:
+    case TK_POSNUM:
+      return 1;
+    case TK_DEREFERENCE:
+      return 2;
     case '*': 
 		case '/': return 3;
     case '+': 
@@ -154,7 +166,7 @@ int op_precedence(int type)
   return 0;
 }
 
-uint32_t findMainOp(int p, int q, bool* success){
+uint32_t findMainOp(int p, int q){
 	uint32_t op = p;
 	int layer = 0;
 	int precedence = 0;
@@ -167,7 +179,6 @@ uint32_t findMainOp(int p, int q, bool* success){
 			}
 			if(type==')'){
 				printf("Bad expression at [%d %d]\n",p,q);
-				*success = false;
 				return 0;
 			}
 			int type_prcedence = op_precedence(type);
@@ -185,10 +196,8 @@ uint32_t findMainOp(int p, int q, bool* success){
 			}
 		}
 	}
-	if(layer!=0||precedence==0)
-	{
+	if(layer!=0||precedence==0){
 		printf("Bad expression at [%d %d]\n",p,q);
-		*success = false;
 	}
 	return op;
 }
@@ -216,8 +225,8 @@ int parse(Token tk){
   
   return  0;
 }
-// result case: 1-> (exp), 0 -> wrong exp, -1 -> exp
 
+// result case: 1-> (exp), 0 -> wrong exp, -1 -> exp
 int check_parentheses(int p, int q){
   int result = -1;
   int layer = 0;
@@ -234,6 +243,8 @@ int check_parentheses(int p, int q){
 			
     }
   }
+
+
   layer = 0;
   for (int i = p; i <= q; i++) {
     if (layer < 0) {
@@ -264,19 +275,15 @@ uint32_t eval(int p, int q, bool* success){
     return parse(tokens[p]);
   }
   int check = check_parentheses(p,q);
-  if(check!=-1){
-		if(check == 0){
-			printf("Bad expression ! check_parenthese, [%d, %d]\n", p, q);
-    	*success=false;
-			return 0;
-		}
-		return eval(p+1, q-1, success);
-  }
-  else{
-    uint32_t op = findMainOp(p, q, success);
-    if(*success==false){
-    	return 0;
-		}
+  if (check != -1) {
+    if (check == 0) {
+      printf("Bad expression ! check_parenthese, [%d, %d]\n", p, q);
+      *success = false;
+      return 0;
+    }
+    return eval(p + 1, q - 1, success);
+  } else {
+    uint32_t op = findMainOp(p, q);
 		uint32_t val1 = 0;
 		if(tokens[op].type != TK_DEREFERENCE && tokens[op].type != TK_NEGNUM && tokens[op].type != TK_POSNUM){
 			val1 = eval(p, op-1, success);
@@ -304,22 +311,22 @@ uint32_t eval(int p, int q, bool* success){
           *success=false;
           return 0;
         }
-				printf("val1:%u / val2:%u\n", val1, val2);
+        printf("val1:%u / val2:%u\n", val1, val2);
         return val1 / val2;
-      case TK_EQ :
-        return val1==val2;
+      case TK_EQ:
+        return val1 == val2;
       case TK_NOTEQ:
         return val1!=val2;
       case TK_AND:
         return val1&&val2;
       case TK_OR:
-        return val1||val2;
+        return val1 || val2;
       case TK_LESS:
         return val1<val2;
       case TK_GREATER:
-        return val1>val2;
+        return val1 > val2;
       case TK_LESSEQ:
-        return val1<=val2;
+        return val1 <= val2;
       case TK_GREATEREQ:
         return val1>=val2;
       default: printf("Bad expression !\n"); *success = false; return 0;
@@ -365,5 +372,5 @@ uint32_t expr(char *e, bool *success) {
     }
   }
 
-        return eval(0, nr_token - 1, success);
+  return eval(0, nr_token - 1, success);
 }
