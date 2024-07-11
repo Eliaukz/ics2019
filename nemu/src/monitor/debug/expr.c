@@ -197,7 +197,7 @@ uint32_t eval(int p,  int q, bool* success){
   } else if (p == q) {
     return parse(tokens[p]);
   } else if (check_parentheses(p, q)) {
-    return eval(p+1,q-1,success);
+    return eval(p + 1, q - 1, success);
   } else {
     int i = 0, prior = -1, pos = -1, num = 0;
     for (int i = q; i >= p; i--) {
@@ -213,7 +213,7 @@ uint32_t eval(int p,  int q, bool* success){
     }
 
     printf("p=%d q=%d ::pos %d prior %d token.str '%s' type %d\n", p, q, pos,
-           prior, tokens[pos].str, tokens[i].type);
+           prior, tokens[pos].str, tokens[pos].type);
 
     int val1, val2;
     bool success1 = true, success2 = true;
