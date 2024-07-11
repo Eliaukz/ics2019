@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "monitor/watchpoint.h"
 #include "monitor/expr.h"
 
@@ -20,4 +23,67 @@ void init_wp_pool() {
 
 /* TODO: Implement the functionality of watchpoint */
 
+WP *new_wp(char* expression) {
+  WP *res = free_;
+  if (res == NULL) assert(0);
+  res->next = head;
+  head = res;
+  res->expression = (char *)malloc(strlen(expression) * sizeof(char));
+  strcpy(res->expression, expression);
+  bool success;
+  res->value = expr(res->expression, &success);
+  res->old_value = res->value;
+  res->enable = true;
+  return res;
+}
 
+void free_wp(WP *ptr) {
+  WP *p = head;
+  while (p->next !=ptr) 
+    p = p->next;
+
+  p->next = ptr->next;
+  ptr->next = free_;
+  free_ = ptr;
+}
+
+bool delete_wp(int no){
+  WP *ptr;
+  bool found = false;
+  for(ptr=head;ptr!=NULL;ptr=ptr->next){
+    if(ptr->NO==no){
+      free_wp(ptr);
+      found = true;
+      break;
+    }   
+  }
+  if(!found){
+    printf("No such an activatd watchpoint\n");
+  }
+  return found;
+}
+bool change_wp() {
+  bool has_changed = false;
+  WP *ptr;
+  for (ptr = head; ptr != NULL; ptr = ptr->next) {
+    bool success;
+    int val = expr(ptr->expression,&success);
+    ptr->old_value = ptr->value;
+    ptr->value = val;
+    if(ptr->value!=ptr->old_value){
+      has_changed = true;
+    }
+  }
+  return has_changed;
+}
+void print_wp(){
+  WP* ptr;
+  printf("%-32s%-16s%-16s%-8s%-8s\n", "expression", "old_value", "value",
+         "change", "enable");
+  for (ptr = head; ptr != NULL; ptr = ptr->next) {
+    char changed = (ptr->old_value == ptr->value) ? 'N' : 'Y';
+    char enabled = (ptr->enable) ? 'Y' : 'N';
+    printf("%-32s%-16d%-16d%-8c%-8c\n", ptr->expression, ptr->old_value,
+           ptr->value, changed, enabled);
+  }
+}

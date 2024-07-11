@@ -226,18 +226,17 @@ int parse(Token tk){
 }
 
 // result case: 1-> (exp), 0 -> wrong exp, -1 -> exp
-int check_parentheses(int p, int q){
+int check_parentheses(int p, int q) {
   int result = -1;
   int layer = 0;
-  if(tokens[p].type=='(' && tokens[q].type==')'){
-		result = 1;
-    for(int i=p+1; i<=q-1; i++){
+  if (tokens[p].type == '(' && tokens[q].type == ')') {
+    result = 1;
+    for (int i = p + 1; i <= q - 1; i++) {
       if(layer < 0){
         result = -1; // 0 or -1
 				break;
       }
       if (tokens[i].type == '(') layer++;
-
       if (tokens[i].type == ')') layer--;
     }
   }
@@ -249,7 +248,6 @@ int check_parentheses(int p, int q){
       break;
     }
     if (tokens[i].type == '(') layer++;
-
     if (tokens[i].type == ')') layer--;
   }
   if (layer != 0) {
@@ -265,19 +263,18 @@ uint32_t eval(int p, int q, bool* success){
     return 0;
   } else if (p == q) {
     if (tokens[p].type!=TK_DECIMAL && tokens[p].type!=TK_HEXADECIMAL && tokens[p].type!=TK_REG){
-      printf ("Bad expression. Single token is wrong. \n");
-      *success=false;
+      printf("Bad expression. Single token is wrong. \n");
+      *success = false;
       return 0;
     }
     return parse(tokens[p]);
   }
-  int check = check_parentheses(p,q);
-  if (check != -1) {
-    if (check == 0) {
-      printf("Bad expression ! check_parenthese, [%d, %d]\n", p, q);
-      *success = false;
-      return 0;
-    }
+  int check = check_parentheses(p, q);
+  if (check == 0) {
+    printf("Bad expression, [%d, %d]\n", p, q);
+    *success = false;
+    return 0;
+  } else if (check == 1) {
     return eval(p + 1, q - 1, success);
   } else {
     uint32_t op = findMainOp(p, q);
@@ -296,36 +293,20 @@ uint32_t eval(int p, int q, bool* success){
 			case TK_DEREFERENCE: return vaddr_read(val2,4);
 			case TK_NEGNUM: return -eval(op+1, q, success);
 			case TK_POSNUM: return eval(op+1, q, success);
-      case '+':
-        return val1+val2;
-      case '-':
-        return val1-val2;
-      case '*':
-        return val1*val2;
-      case '/':
-        if(val2==0){
-          printf("Divide by 0 !\n");
-          *success=false;
-          assert(0);
-        }
+      case '+':  return val1+val2;
+      case '-':  return val1-val2;
+      case '*':  return val1*val2;
+      case '/': if(val2==0){printf("Divide by 0 !\n");*success=false;return 0;}
         // printf("val1:%u / val2:%u\n", val1, val2);
-        return val1 / val2;
-      case TK_EQ:
-        return val1 == val2;
-      case TK_NOTEQ:
-        return val1!=val2;
-      case TK_AND:
-        return val1&&val2;
-      case TK_OR:
-        return val1 || val2;
-      case TK_LESS:
-        return val1<val2;
-      case TK_GREATER:
-        return val1 > val2;
-      case TK_LESSEQ:
-        return val1 <= val2;
-      case TK_GREATEREQ:
-        return val1>=val2;
+                   return val1 / val2;
+      case TK_EQ:  return val1 == val2;
+      case TK_NOTEQ:  return val1!=val2;
+      case TK_AND:  return val1&&val2;
+      case TK_OR: return val1 || val2;
+      case TK_LESS: return val1<val2;
+      case TK_GREATER:  return val1 > val2;
+      case TK_LESSEQ: return val1 <= val2;
+      case TK_GREATEREQ:  return val1>=val2;
       default: printf("Bad expression !\n"); *success = false; return 0;
     }
   }
@@ -349,7 +330,8 @@ uint32_t expr(char *e, bool *success) {
              tokens[i - 1].type != TK_NEGNUM))
       if (tokens[i].type == '*') tokens[i].type = TK_DEREFERENCE;
   }
-        /* NEG OR POS NUMBER TYPE */
+
+  /* NEG OR POS NUMBER TYPE */
   for (int i = 0; i < nr_token; i++) {
     if (i == 0 ||
             (tokens[i - 1].type != TK_REG && tokens[i - 1].type != TK_DECIMAL &&
