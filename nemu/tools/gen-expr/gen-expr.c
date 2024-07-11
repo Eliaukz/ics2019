@@ -5,10 +5,54 @@
 #include <assert.h>
 #include <string.h>
 
+#define NR_TOKENS 32
 // this should be enough
-static char buf[65536];
-static inline void gen_rand_expr() {
-  buf[0] = '\0';
+char buf[65536];
+int pos = 0;
+
+uint32_t choose(uint32_t n) { return rand() % n; }
+
+void gen_num() {
+  uint32_t num = rand() % 100;
+  char buffer[40];
+  snprintf(buffer, sizeof(buffer), "%d", num);
+  int len = strlen(buffer);
+  strcpy(&buf[pos],buffer);
+  pos += len;
+}
+
+void gen(char c){
+   if (c == '(') buf[pos] = '(';
+   if (c == ')') buf[pos] = ')';
+   pos++;
+}
+
+ void gen_rand_op(){
+  switch (choose(4)){
+    case 0 : buf[pos]='+';break;
+    case 1 : buf[pos]='-';break;
+    case 2 : buf[pos]='*';break;
+    case 3 : buf[pos]='/';break;
+  }
+  pos++;
+}
+
+ void gen_rand_expr() {
+  switch (choose(3)){
+    case 0 :
+      gen_num();
+      break;
+    case 1:
+      gen('(');
+      gen_rand_expr();
+      gen(')');
+      break;
+    case 2:
+      gen_rand_expr();
+      gen_rand_op();
+      gen_rand_expr();
+      break;
+  }
 }
 
 static char code_buf[65536];
@@ -29,6 +73,8 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+    pos = 0;
+    memset(buf, 0, sizeof(buf));
     gen_rand_expr();
 
     sprintf(code_buf, code_format, buf);
