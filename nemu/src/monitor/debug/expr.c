@@ -212,8 +212,8 @@ uint32_t eval(int p,  int q, bool* success){
       }
     }
 
-    // printf("pos %d prior %d token.str '%s' type %d\n", pos, prior,
-    //        tokens[pos].str, tokens[i].type);
+    printf("pos %d prior %d token.str '%s' type %d\n", pos, prior,
+           tokens[pos].str, tokens[i].type);
 
     int val1, val2;
     bool success1 = true, success2 = true;
