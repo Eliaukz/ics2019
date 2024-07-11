@@ -260,7 +260,7 @@ uint32_t eval(int p,  int q, bool* success){
           return vaddr_read(val2, 4);
         default: {
           printf("Symbol not recognized\n");
-          assert(0);
+          
         }
       }
       } else {
@@ -268,7 +268,7 @@ uint32_t eval(int p,  int q, bool* success){
         return 0;
       }
     }
-
+assert(0);
     return 0;
   }
   assert(0);
