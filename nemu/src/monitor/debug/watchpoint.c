@@ -38,14 +38,17 @@ WP *new_wp(char* expression) {
   return res;
 }
 
-void free_wp(WP *ptr) {
-  WP *p = head;
-  while (p->next !=ptr) 
-    p = p->next;
-
-  p->next = ptr->next;
-  ptr->next = free_;
-  free_ = ptr;
+void free_wp(WP *wp) {
+  WP* ptr;
+  for (ptr = head; ptr != NULL && ptr->next != wp; ptr = ptr->next){}
+  if (ptr == NULL) {
+    printf("not find such watchpoint\n");
+  } else {
+    ptr->next = wp->next;
+    wp->next = free_;
+    free_ = wp;
+    wp->enable=false;
+  }
 }
 
 bool delete_wp(int no){
