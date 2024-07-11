@@ -10,18 +10,10 @@
 uint32_t isa_reg_str2val(const char *s, bool *success);
 
 enum {
-  TK_NOTYPE = 256, 
+  TK_NOTYPE = 256, TK_EQ, TK_NOTEQ, TK_DECIMAL, TK_OR, TK_LESSEQ, TK_GREATEREQ, TK_LESS, TK_GREATER, TK_HEXADECIMAL, TK_AND, TK_REG, TK_DEREFERENCE, TK_POSNUM, TK_NEGNUM
 
   /* TODO: Add more token types */
-  TK_DEC,
-  TK_HEX,
-  TK_REG,
-  TK_NEG,
-  TK_ADR,
-  TK_EQU,
-  TK_NEQ,
-  TK_AND,
-  TK_LOR
+
 };
 
 static struct rule {
@@ -29,28 +21,30 @@ static struct rule {
   int token_type;
 } rules[] = {
 
-    /* TODO: Add more rules.
-     * Pay attention to the precedence level of different rules.
-     */
+  /* TODO: Add more rules.
+   * Pay attention to the precedence level of different rules.
+   */
 
-    {" +", TK_NOTYPE},                  // spaces
-    {"\\+", '+'},                       // plus
-    {"==", TK_EQU},                     // equal
-    {"!=", TK_NEQ},                     // neq
-    {"\\*", '*'},                       // star
-    {"/", '/'},                         // div
-    {"-", '-'},                         // minus
-    {"\\(", '('},                       // left
-    {"\\)", ')'},                       // right
-    {"&&", TK_AND},                     // amd
-    {"\\|\\|", TK_LOR},                 // or
-    {"!", '!'},                         // non
-    {"0x[0-9a-fA-F]+", TK_HEX},         // number
-    {"([0-9])|([1-9][0-9]*)", TK_DEC},  // number
-    {"($0)|(ra)|(sp)|(gp)|(tp)|(t0)|(t1)|(t2)|(t3)|(s0)|(s1)|(a0)|(a1)|(a2)|("
-     "a3)|(a4)|(a5)|(a6)|(a7)|(s2)|(s3)|(s4)|(s5)|(s6)|(s7)|(s8)|(s9)|(s10)|("
-     "s11)|(t3)|(t4)|(t5)|(t6)",
-     TK_REG}};
+  {" +", TK_NOTYPE},    // spaces
+  {"\\+", '+'},         // plus
+  {"==", TK_EQ},         // equal
+	{"!=", TK_NOTEQ},			// not equal
+	{"\\-", '-'},					// minus
+	{"\\*", '*'},					// times
+	{"/", '/'},						// divide
+	{"\\(", '('},
+	{"\\)", ')'},
+	{"0[xX][0-9a-fA-F]+",TK_HEXADECIMAL},
+	{"[0-9]+", TK_DECIMAL},
+	{"\\$(\\$0|ra|[sgt]p|t[0-6]|a[0-7]|s([0-9]|1[0-1]))", TK_REG}, // more specific
+	// {"\\$[\\$0-9a-zA-z]+", TK_REG},  // general
+	{"\\|\\|",TK_OR},
+	{"<=", TK_LESSEQ},
+	{">=", TK_GREATEREQ},
+	{"<", TK_LESS},
+	{">", TK_GREATER},
+	{"&&",TK_AND}
+};
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 
@@ -78,7 +72,7 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[64] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -104,18 +98,26 @@ static bool make_token(char *e) {
          * of tokens, some extra actions should be performed.
          */
 
-         switch (rules[i].token_type) {
-          case TK_NOTYPE:
+        switch (rules[i].token_type) {
+					case TK_NOTYPE:
+						break;
+					case TK_DECIMAL:
+					case TK_HEXADECIMAL:
+					case TK_REG:
+						tokens[nr_token].type = rules[i].token_type;
+						if(substr_len>=32){
+              printf("\033[0;33m Number Overflow !\n\033[0m;");
+              return false;
+            }
+            strncpy(tokens[nr_token].str,substr_start,substr_len);
+            tokens[nr_token].str[substr_len] ='\0';
+            nr_token++;
             break;
-          default: {
-            Token tk;
-            tk.type = rules[i].token_type;
-            tk.str[0] = '\0';
-            strncpy(tk.str, substr_start, substr_len);
-            tk.str[substr_len] = 0;
-            tokens[nr_token++] = tk;
-          }
+          default: 
+            tokens[nr_token].type = rules[i].token_type;
+           	nr_token++;
         }
+
         break;
       }
     }
@@ -129,55 +131,81 @@ static bool make_token(char *e) {
   return true;
 }
 
-
-int priority(Token tk){
-  switch (tk.type){
-  case '(':
-  case ')': return 1;
-  case '!':
-  case TK_NEG:
-  case TK_ADR: return 2;
-  case '*':
-  case '/': return 3;
-  case '+':
-  case '-': return 4;
-  case TK_EQU:
-  case TK_NEQ: return 7;
-  case TK_AND: return 11;
-  case TK_LOR: return 12;
+int op_precedence(int type)
+{
+  switch(type)
+  {
+		case TK_NEGNUM:
+		case TK_POSNUM: return 1;
+		case TK_DEREFERENCE: return 2;
+    case '*': 
+		case '/': return 3;
+    case '+': 
+		case '-': return 4;
+    case TK_LESS: 
+		case TK_GREATER: 
+		case TK_LESSEQ: 
+		case TK_GREATEREQ : return 6;
+    case TK_EQ: 
+		case TK_NOTEQ : return 7;
+    case TK_AND : return 11;
+    case TK_OR : return 12;
   }
-  return -1;
+  return 0;
 }
 
-bool check_parentheses(int p, int q){
-  // num>0 表示左括号数量大于右括号  num<0 此时右括号数量大于左括号
-  if (tokens[p].type != '(' || tokens[q].type != ')') return false;
-
-  int num = 0;
-
-  for (int i = p; i <= q; ++i) {
-    if (tokens[i].type == '(')
-      num++;
-    else if (tokens[i].type == ')')
-      num--;
-
-    assert(num >= 0);
-  }
-
-  return num == 0;
+uint32_t findMainOp(int p, int q, bool* success){
+	uint32_t op = p;
+	int layer = 0;
+	int precedence = 0;
+	for(int i=p; i<=q; i++){
+		if(layer==0){
+		  int type = tokens[i].type;
+		  if(type=='('){
+				layer++;
+				continue;
+			}
+			if(type==')'){
+				printf("Bad expression at [%d %d]\n",p,q);
+				*success = false;
+				return 0;
+			}
+			int type_prcedence = op_precedence(type);
+			if (type_prcedence >= precedence){
+				op=i;
+				precedence=type_prcedence;
+			}
+		}
+		else{
+		  if(tokens[i].type==')'){
+		  	layer--;
+			}
+		  if(tokens[i].type=='('){
+		  	layer++;
+			}
+		}
+	}
+	if(layer!=0||precedence==0)
+	{
+		printf("Bad expression at [%d %d]\n",p,q);
+		*success = false;
+	}
+	return op;
 }
 
-uint32_t parse(Token tk){
+int parse(Token tk){
   char* ptr;
   switch(tk.type){
-    case TK_DEC:return strtol(tk.str,&ptr,10);
-    case TK_HEX:return strtol(tk.str,&ptr,16);
+    case TK_DECIMAL:
+      return strtol(tk.str, &ptr, 10);
+    case TK_HEXADECIMAL:
+      return strtol(tk.str, &ptr, 16);
     case TK_REG:{
       bool success;
-      int ans = isa_reg_str2val(tk.str, &success);
-      if (success) {
+      int ans = isa_reg_str2val(tk.str,&success);
+      if(success){
         return ans;
-      } else {
+      }else{
         printf("reg visit fail\n");
         return 0;
       }
@@ -188,115 +216,154 @@ uint32_t parse(Token tk){
   
   return  0;
 }
+// result case: 1-> (exp), 0 -> wrong exp, -1 -> exp
 
-
-uint32_t eval(int p,  int q, bool* success){
-  if(p>q){
-    printf("Bad Expression\n");
-    assert(0);
-  } else if (p == q) {
-    return parse(tokens[p]);
-  } else if (check_parentheses(p, q)) {
-    return eval(p + 1, q - 1, success);
-  } else {
-
-    int i = 0, prior = -1, pos = -1, num = 0;
-    for (int i = q; i >= p; i--) {
-      if (tokens[i].type == ')')
-        num++;
-      else if (tokens[i].type == '(')
-        num--;
-      int tmp = priority(tokens[i]);
-      if(tmp > prior&&num==0){
-        prior = tmp;
-        pos = i;
+int check_parentheses(int p, int q){
+  int result = -1;
+  int layer = 0;
+  if(tokens[p].type=='(' && tokens[q].type==')'){
+		result = 1;
+    for(int i=p+1; i<=q-1; i++){
+      if(layer < 0){
+        result = -1; // 0 or -1
+				break;
       }
+      if (tokens[i].type == '(') layer++;
+
+      if (tokens[i].type == ')') layer--;
+			
     }
-    if (prior == -1) return  parse(tokens[pos]);
-
-
-    printf("p=%d q=%d ::pos %d prior %d token.str '%s' type %d\n", p, q, pos,
-           prior, tokens[pos].str, tokens[pos].type);
-
-    int val1, val2;
-    bool success1 = true, success2 = true;
-    if (pos > p) {
-      // 说明是双目运算符
-      val1 = eval(p, pos - 1, &success1);
-      val2 = eval(pos + 1, q, &success2);
-      if(success1&&success2){
-        switch (tokens[pos].type){
-        case '+':
-          return val1 + val2;
-        case '-':
-          return val1 - val2;
-          case '*':
-            return val1 * val2;
-        case '/':{
-          if(val2==0){
-            printf("Denominator cannot be 0\n");
-            *success = false;
-            return 0;
-          }
-          return val1 / val2;
-        }
-        case TK_AND:
-          return val1 && val2;
-        case TK_LOR:
-          return val1 || val2;
-        default:
-          assert(0);
-        }
-      }else{
-        *success = false;
-        return 0;
-      }
-    }else{
-      val2 = eval(pos + 1, q, &success2);
-      if(success2){
-      switch (tokens[i].type) {
-         case TK_NEG:return -val2;
-        case '!':
-          return !val2;
-        case TK_ADR:
-          return vaddr_read(val2, 4);
-        default: {
-          printf("Symbol not recognized\n");
-          
-        }
-      }
-      } else {
-        *success = false;
-        return 0;
-      }
+  }
+  layer = 0;
+  for (int i = p; i <= q; i++) {
+    if (layer < 0) {
+      result = 0;
+      break;
     }
+    if (tokens[i].type == '(') layer++;
+
+    if (tokens[i].type == ')') layer--;
+  }
+  if (layer != 0) {
     return 0;
   }
-  assert(0);
+  return result;
 }
 
-
+uint32_t eval(int p, int q, bool* success){
+  if (p > q) {
+    printf("Bad expression. p>q \n");
+    *success = false;
+    return 0;
+  } else if (p == q) {
+    if (tokens[p].type!=TK_DECIMAL && tokens[p].type!=TK_HEXADECIMAL && tokens[p].type!=TK_REG){
+      printf ("Bad expression. Single token is wrong. \n");
+      *success=false;
+      return 0;
+    }
+    return parse(tokens[p]);
+  }
+  int check = check_parentheses(p,q);
+  if(check!=-1){
+		if(check == 0){
+			printf("Bad expression ! check_parenthese, [%d, %d]\n", p, q);
+    	*success=false;
+			return 0;
+		}
+		return eval(p+1, q-1, success);
+  }
+  else{
+    uint32_t op = findMainOp(p, q, success);
+    if(*success==false){
+    	return 0;
+		}
+		uint32_t val1 = 0;
+		if(tokens[op].type != TK_DEREFERENCE && tokens[op].type != TK_NEGNUM && tokens[op].type != TK_POSNUM){
+			val1 = eval(p, op-1, success);
+		}
+    if(*success==false){
+    	return 0;
+		}
+    uint32_t val2 = eval(op+1, q, success);
+    if(*success==false){
+    	return 0;
+		}
+    switch (tokens[op].type){
+			case TK_DEREFERENCE: return vaddr_read(val2,4);
+			case TK_NEGNUM: return -eval(op+1, q, success);
+			case TK_POSNUM: return eval(op+1, q, success);
+      case '+':
+        return val1+val2;
+      case '-':
+        return val1-val2;
+      case '*':
+        return val1*val2;
+      case '/':
+        if(val2==0){
+          printf("Divide by 0 !\n");
+          *success=false;
+          return 0;
+        }
+				printf("val1:%u / val2:%u\n", val1, val2);
+        return val1 / val2;
+      case TK_EQ :
+        return val1==val2;
+      case TK_NOTEQ:
+        return val1!=val2;
+      case TK_AND:
+        return val1&&val2;
+      case TK_OR:
+        return val1||val2;
+      case TK_LESS:
+        return val1<val2;
+      case TK_GREATER:
+        return val1>val2;
+      case TK_LESSEQ:
+        return val1<=val2;
+      case TK_GREATEREQ:
+        return val1>=val2;
+      default: printf("Bad expression !\n"); *success = false; return 0;
+    }
+  }
+}
 
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
-  
+
   /* TODO: Insert codes to evaluate the expression. */
-  //TODO();
+  // TODO();
+
+	/* 引用类型*/
   for (int i = 0; i < nr_token; i++) {
-    if (tokens[i].type == '-' || tokens[i].type == '*') {
-      if (i == 0 ||
-              (tokens[i - 1].type != TK_DEC && tokens[i - 1].type != TK_HEX &&
-               tokens[i - 1].type != TK_REG && tokens[i - 1].type != ')')) {
-        // 检查 - 或 * 左边的token来判断该符号是不是单目运算符
-        if(tokens[i].type=='-')
-          tokens[i].type = TK_NEG;
-        else
-          tokens[i].type = TK_ADR;
+    if (i == 0 ||
+            (tokens[i - 1].type != TK_REG && tokens[i - 1].type != TK_DECIMAL &&
+             tokens[i - 1].type != TK_HEXADECIMAL &&
+             tokens[i - 1].type != ')' && tokens[i - 1].type != TK_POSNUM &&
+             tokens[i - 1].type != TK_NEGNUM))
+      if (tokens[i].type == '*') tokens[i].type = TK_DEREFERENCE;
+  }
+        /* NEG OR POS NUMBER TYPE */
+  for (int i = 0; i < nr_token; i++) {
+    if (i == 0 ||
+            (tokens[i - 1].type != TK_REG && tokens[i - 1].type != TK_DECIMAL &&
+             tokens[i - 1].type != TK_HEXADECIMAL &&
+             tokens[i - 1].type != ')' &&
+             tokens[i - 1].type != TK_DEREFERENCE &&
+             tokens[i - 1].type != TK_POSNUM &&
+             tokens[i - 1].type != TK_NEGNUM)) {
+      switch (tokens[i].type) {
+        case '+':
+          tokens[i].type = TK_POSNUM;
+          break;
+        case '-':
+          tokens[i].type = TK_NEGNUM;
+          break;
       }
     }
   }
-  return eval(0, nr_token - 1, success);
+
+        return eval(0, nr_token - 1, success);
 }
