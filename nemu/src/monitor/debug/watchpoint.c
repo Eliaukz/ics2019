@@ -64,7 +64,7 @@ void free_wp(WP *wp) {
 bool delete_wp(int no){
   WP *ptr;
   bool found = false;
-  printf("no%d\n", no);
+  // printf("no%d\n", no);
   for (ptr = head; ptr != NULL; ptr = ptr->next) {
     if (ptr->NO == no) {
       free_wp(ptr);
