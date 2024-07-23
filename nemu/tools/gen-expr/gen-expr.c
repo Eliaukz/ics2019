@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     uint32_t result;
     fscanf(fp, "%d", &result);
     pclose(fp);
-    if (result < 1 << 30) printf("%u %s\n", result, buf);
+    if (result < (1 << 30)) printf("%u %s\n", result, buf);
   }
   return 0;
 }
