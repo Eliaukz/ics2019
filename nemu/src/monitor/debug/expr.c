@@ -285,7 +285,7 @@ uint32_t eval(int p, int q, bool* success){
       case '+':  return val1+val2;
       case '-':  return val1-val2;
       case '*':  return val1*val2;
-      case '/': if(val2==0){printf("Divide by 0 !\n");*success=false;return 0;}
+      case '/': if(val2==0){  printf("Divide by 0 !\n");  *success=false; return 0;  }
         // printf("val1:%u / val2:%u\n", val1, val2);
                    return val1 / val2;
       case TK_EQ:  return val1 == val2;
@@ -296,7 +296,7 @@ uint32_t eval(int p, int q, bool* success){
       case TK_GREATER:  return val1 > val2;
       case TK_LESSEQ: return val1 <= val2;
       case TK_GREATEREQ:  return val1>=val2;
-      default: printf("Bad expression !\n"); *success = false; return 0;
+      default: {  printf("Bad expression !\n"); *success = false; return 0; }
     }
   }
 }
