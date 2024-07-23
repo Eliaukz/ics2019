@@ -116,10 +116,6 @@ static bool make_token(char *e) {
           case TK_HEXADECIMAL:
           case TK_REG:
             tokens[nr_token].type = rules[i].token_type;
-            if (substr_len >= 32) {
-              printf("\033[0;33m Number Overflow !\n\033[0m;");
-              return false;
-            }
             strncpy(tokens[nr_token].str,substr_start,substr_len);
             tokens[nr_token].str[substr_len] = '\0';
             nr_token++;
@@ -142,87 +138,80 @@ static bool make_token(char *e) {
   return true;
 }
 
-int op_precedence(int type){
-  switch (type) {
-    case TK_NEGNUM:
-    case TK_POSNUM:
-      return 1;
-    case TK_DEREFERENCE:
-      return 2;
-    case '*': 
-		case '/': return 3;
-    case '+': 
-		case '-': return 4;
-    case TK_LESS: 
-		case TK_GREATER: 
-		case TK_LESSEQ: 
-		case TK_GREATEREQ : return 6;
-    case TK_EQ: 
-		case TK_NOTEQ : return 7;
-    case TK_AND : return 11;
-    case TK_OR : return 12;
-  }
-  return 0;
-}
-
-uint32_t findMainOp(int p, int q){
-	uint32_t op = p;
-	int layer = 0;
-	int precedence = 0;
-	for(int i=p; i<=q; i++){
-		if(layer==0){
-		  int type = tokens[i].type;
-		  if(type=='('){
-				layer++;
-				continue;
-			}
-			if(type==')'){
-				printf("Bad expression at [%d %d]\n",p,q);
-				return 0;
-			}
-			int type_prcedence = op_precedence(type);
-			if (type_prcedence >= precedence){
-				op=i;
-				precedence=type_prcedence;
-			}
-		}
-		else{
-		  if(tokens[i].type==')'){
-		  	layer--;
-			}
-		  if(tokens[i].type=='('){
-		  	layer++;
-			}
-		}
-	}
-	if(layer!=0||precedence==0){
-		printf("Bad expression at [%d %d]\n",p,q);
-	}
-	return op;
-}
-
-int parse(Token tk){
-  char* ptr;
-  switch(tk.type){
-    case TK_DECIMAL:
-      return strtol(tk.str, &ptr, 10);
-    case TK_HEXADECIMAL:
-      return strtol(tk.str, &ptr, 16);
-    case TK_REG:{
-      bool success;
-      int ans = isa_reg_str2val(tk.str, &success);
-      if (success) {
-        return ans;
-      } else {
-        printf("reg visit fail\n");
-        return 0;
-      }
+int op_precedence(int type) {
+    switch (type) {
+        case TK_NEGNUM:
+        case TK_POSNUM:
+            return 1;
+        case TK_DEREFERENCE:
+            return 2;
+        case '*':
+        case '/':
+            return 3;
+        case '+':
+        case '-':
+            return 4;
+        case TK_LESS:
+        case TK_GREATER:
+        case TK_LESSEQ:
+        case TK_GREATEREQ:
+            return 6;
+        case TK_EQ:
+        case TK_NOTEQ:
+            return 7;
+        case TK_AND:
+            return 11;
+        case TK_OR:
+            return 12;
     }
+    return 0;
+}
 
-    default:{printf("cannot parse number\n");assert(0);}
-  }
-  
-  return  0;
+uint32_t findMainOp(int p, int q) {
+    uint32_t op = p;
+    int layer = 0;
+    int precedence = 0;
+    for (int i = p; i <= q; i++) {
+        if (layer == 0) {
+            int type = tokens[i].type;
+            if (type == '(') {
+                layer++;
+                continue;
+            }
+            if (type == ')') {
+                printf("Bad expression at [%d %d]\n", p, q);
+                return 0;
+            }
+            int type_prcedence = op_precedence(type);
+            if (type_prcedence >= precedence) {
+                op = i;
+                precedence = type_prcedence;
+            }
+        } else {
+            if (tokens[i].type == ')') {layer--;}
+            if (tokens[i].type == '(') {layer++;}
+        }
+    }
+    if (layer != 0 || precedence == 0) {
+        printf("Bad expression at [%d %d]\n", p, q);
+    }
+    return op;
+}
+
+int parse(Token tk) {
+    char * ptr;
+    switch (tk.type) {
+        case TK_DECIMAL:  return strtol(tk.str, & ptr, 10);
+        case TK_HEXADECIMAL:  return strtol(tk.str, & ptr, 16);
+        case TK_REG: {
+            bool success;
+            int ans = isa_reg_str2val(tk.str, & success);
+            if (success) {  return ans; } 
+            else { printf("reg visit fail\n"); return 0; }
+        }
+        default: { printf("cannot parse number\n");assert(0);}
+    }
+    return 0;
 }
 
 // result case: 1-> (exp), 0 -> wrong exp, -1 -> exp
